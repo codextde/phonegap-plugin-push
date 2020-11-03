@@ -103,28 +103,33 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
         PushPlugin.setApplicationIconBadgeNumber(getApplicationContext(), 0);
       }
 
-      // if we are in the foreground and forceShow is `false` only send data
-      if (!forceShow && PushPlugin.isInForeground()) {
-        Log.d(LOG_TAG, "foreground");
-        extras.putBoolean(FOREGROUND, true);
-        extras.putBoolean(COLDSTART, false);
-        PushPlugin.sendExtras(extras);
-      }
-      // if we are in the foreground and forceShow is `true`, force show the notification if the data has at least a message or title
-      else if (forceShow && PushPlugin.isInForeground()) {
-        Log.d(LOG_TAG, "foreground force");
-        extras.putBoolean(FOREGROUND, true);
-        extras.putBoolean(COLDSTART, false);
+      if ("true".equals(message.getData().get("voip")) && PushPlugin.isActive()) {
+          extras.putString("caller", message.getData().get("caller"));
+          PushPlugin.sendExtras(extras);
+      } else {
+          // if we are in the foreground and forceShow is `false` only send data
+          if (!forceShow && PushPlugin.isInForeground()) {
+              Log.d(LOG_TAG, "foreground");
+              extras.putBoolean(FOREGROUND, true);
+              extras.putBoolean(COLDSTART, false);
+              PushPlugin.sendExtras(extras);
+          }
+          // if we are in the foreground and forceShow is `true`, force show the notification if the data has at least a message or title
+          else if (forceShow && PushPlugin.isInForeground()) {
+              Log.d(LOG_TAG, "foreground force");
+              extras.putBoolean(FOREGROUND, true);
+              extras.putBoolean(COLDSTART, false);
+              PushPlugin.sendExtras(extras);
+              showNotificationIfPossible(applicationContext, extras);
+          }
+          // if we are not in the foreground always send notification if the data has at least a message or title
+          else {
+              Log.d(LOG_TAG, "background");
+              extras.putBoolean(FOREGROUND, false);
+              extras.putBoolean(COLDSTART, PushPlugin.isActive());
 
-        showNotificationIfPossible(applicationContext, extras);
-      }
-      // if we are not in the foreground always send notification if the data has at least a message or title
-      else {
-        Log.d(LOG_TAG, "background");
-        extras.putBoolean(FOREGROUND, false);
-        extras.putBoolean(COLDSTART, PushPlugin.isActive());
-
-        showNotificationIfPossible(applicationContext, extras);
+              showNotificationIfPossible(applicationContext, extras);
+          }
       }
     }
   }
