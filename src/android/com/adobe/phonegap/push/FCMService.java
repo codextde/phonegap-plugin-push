@@ -106,7 +106,7 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
       if ("true".equals(message.getData().get("voip")) && PushPlugin.isActive()) {
           extras.putString("caller", message.getData().get("caller"));
           PushPlugin.sendExtras(extras);
-      } else {
+      } else if (!"true".equals(message.getData().get("voip"))) {
           // if we are in the foreground and forceShow is `false` only send data
           if (!forceShow && PushPlugin.isInForeground()) {
               Log.d(LOG_TAG, "foreground");
