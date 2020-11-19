@@ -48,11 +48,20 @@ import java.util.List;
 import java.util.Map;
 import java.security.SecureRandom;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 @SuppressLint("NewApi")
 public class FCMService extends FirebaseMessagingService implements PushConstants {
 
   private static final String LOG_TAG = "Push_FCMService";
   private static HashMap<Integer, ArrayList<String>> messageMap = new HashMap<Integer, ArrayList<String>>();
+  private static final String CHANNEL_VOIP = "Voip";
+  private static final String CHANNEL_NAME = "TCVoip";
 
   public void setNotification(int notId, String message) {
     ArrayList<String> messageList = messageMap.get(notId);
@@ -67,6 +76,43 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
       messageList.add(message);
     }
   }
+
+  private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_VOIP, CHANNEL_NAME, importance);
+            channel.setDescription("Channel For VOIP Calls");
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+  void callWebhook(String url, String callId, String status) {
+        OkHttpClient client = new OkHttpClient();
+
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+        urlBuilder.addQueryParameter("id", callId);
+        urlBuilder.addQueryParameter("input", status);
+        String urlBuilt = urlBuilder.build().toString();
+        Request request = new Request.Builder().url(urlBuilt).build();
+
+        client.newCall(request)
+            .enqueue(new Callback() {
+                @Override
+                public void onFailure(final Call call, IOException e) {
+                    Log.d(LOG_TAG, "Update For CallId " + callId + " and Status " + status + " failed" );
+                }
+
+                @Override
+                public void onResponse(Call call, final Response response) {
+                    Log.d(LOG_TAG, "Update For CallId " + callId + " and Status " + status + " successful" );
+                }
+            });
+    }
 
   @Override
   public void onMessageReceived(RemoteMessage message) {
@@ -103,10 +149,36 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
         PushPlugin.setApplicationIconBadgeNumber(getApplicationContext(), 0);
       }
 
-      if ("true".equals(message.getData().get("voip")) && PushPlugin.isActive()) {
-          extras.putString("caller", message.getData().get("caller"));
-          PushPlugin.sendExtras(extras);
-      } else if (!"true".equals(message.getData().get("voip"))) {
+      if ("true".equals(message.getData().get("voip"))) {
+          createNotificationChannel();
+          callWebhook(message.getData().get("callbackUrl"), message.getData().get("callId"),"connected");
+
+          Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_VOIP)
+                    .setSmallIcon(R.drawable.common_google_signin_btn_icon_light)
+                    .setContentTitle("Incoming call")
+                    .setContentText(message.getData().get("caller"))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setCategory(NotificationCompat.CATEGORY_CALL)
+                    // Set the intent that will fire when the user taps the notification
+                    .setFullScreenIntent(pendingIntent,true)
+//                    .setContentIntent(pendingIntent).setVisibility(Notification.VISIBILITY_PUBLIC)
+                    .addAction(R.drawable.common_google_signin_btn_icon_dark_focused, "Accept",
+                        pendingIntent)
+                    .addAction(R.drawable.common_google_signin_btn_icon_dark_focused, "Decline",
+                        pendingIntent)
+
+
+                    .setAutoCancel(true);
+
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+                Random random = new Random();
+                //// notificationId is a unique int for each notification that you must define
+                notificationManager.notify(random.nextInt(10000), builder.build());
+      } else {
           // if we are in the foreground and forceShow is `false` only send data
           if (!forceShow && PushPlugin.isInForeground()) {
               Log.d(LOG_TAG, "foreground");
