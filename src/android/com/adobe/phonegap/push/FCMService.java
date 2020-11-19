@@ -171,6 +171,10 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
                     .addAction(R.drawable.common_google_signin_btn_icon_dark_focused, "Decline",
                         pendingIntent)
 
+        // ACTIONS TO TRIGGER ON ACCEPT/DECLINE
+        // ACCEPT
+        // callWebhook(message.getData().get("callbackUrl"), message.getData().get("callId"),"pickup");
+        // callWebhook(message.getData().get("callbackUrl"), message.getData().get("callId"),"declined_callee");
 
                     .setAutoCancel(true);
 
