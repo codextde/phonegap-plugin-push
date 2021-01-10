@@ -47,7 +47,7 @@ public class IncomingCallActivity extends Activity {
         ((TextView) findViewById(getResources().getIdentifier("tvCaller", "id", getPackageName()))).setText(caller);
 
         swipeAnimationButton = findViewById(getResources().getIdentifier("swipe_btn", "id", getPackageName()));
-        swipeAnimationButton.defaultDrawable = getResources().getDrawable(getResources().getIdentifier("pushicon", "drawable", getPackageName()));
+        // swipeAnimationButton.defaultDrawable = getResources().getDrawable(getResources().getIdentifier("pushicon", "drawable", getPackageName()));
         swipeAnimationButton.slidingButton.setImageDrawable(swipeAnimationButton.defaultDrawable);
         swipeAnimationButton.shouldAnimateExpand = false;
         swipeAnimationButton.startShaking(1000);
@@ -122,7 +122,7 @@ public class IncomingCallActivity extends Activity {
     private void showUnlockScreenNotification() {
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, PushConstants.DEFAULT_CHANNEL_ID)
-                        .setSmallIcon(getResources().getIdentifier("pushicon", "drawable", getPackageName()))
+                        .setSmallIcon(17301514)
                         .setContentTitle("Ongoing call with " + caller)
                         .setContentText("Please unlock your device to continue")
                         .setPriority(NotificationCompat.PRIORITY_HIGH)

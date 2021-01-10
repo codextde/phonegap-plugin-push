@@ -69,7 +69,7 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
 
     // VoIP
     private static final String CHANNEL_VOIP = "Voip";
-    private static final String CHANNEL_NAME = "TCVoip";
+    private static final String CHANNEL_NAME = "Voip";
     private BroadcastReceiver voipNotificationActionBR;
     public static final int VOIP_NOTIFICATION_ID = 168697;
 
@@ -121,10 +121,12 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
             if (clearBadge) {
                 PushPlugin.setApplicationIconBadgeNumber(getApplicationContext(), 0);
             }
-
+            Log.d(LOG_TAG, "onMessage - voip: " + message.getData().get("voip"));
+            Log.d(LOG_TAG, "onMessage - isCancelPush: " + message.getData().get("isCancelPush"));
             if ("true".equals(message.getData().get("voip"))) {
                 if ("true".equals(message.getData().get("isCancelPush"))) {
                     dismissVOIPNotification();
+
                     IncomingCallActivity.dismissUnlockScreenNotification(this.getApplicationContext());
                 } else {
                     showVOIPNotification(message.getData());
@@ -201,7 +203,7 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
         String callbackUrl = messageData.get("callbackUrl");
 
         // Update Webhook status to CONNECTED
-        updateWebhookVOIPStatus(callbackUrl, callId, IncomingCallActivity.VOIP_CONNECTED);
+        // updateWebhookVOIPStatus(callbackUrl, callId, IncomingCallActivity.VOIP_CONNECTED);
 
         // Intent for LockScreen or tapping on notification
         Intent fullScreenIntent = new Intent(this, IncomingCallActivity.class);
@@ -219,7 +221,8 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
 
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, CHANNEL_VOIP)
-                        .setSmallIcon(getResources().getIdentifier("pushicon", "drawable", getPackageName()))
+                        // .setSmallIcon(getResources().getIdentifier("pushicon", "drawable", getPackageName()))
+                        .setSmallIcon(17301514)
                         .setContentTitle("Incoming call")
                         .setContentText(caller)
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -263,7 +266,7 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
                     dismissVOIPNotification();
                     String voipStatus = intent.getAction();
                     // Update Webhook status to CONNECTED
-                    updateWebhookVOIPStatus(callbackUrl, callId, voipStatus);
+                    // updateWebhookVOIPStatus(callbackUrl, callId, voipStatus);
 
                     // Start cordova activity on answer
                     if (voipStatus.equals(IncomingCallActivity.VOIP_ACCEPT)) {
